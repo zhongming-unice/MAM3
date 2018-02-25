@@ -1,0 +1,95 @@
+---
+title: "TP-Projet"
+author: "ZHONG"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+### Research questions
+i.   Which state has the highest proportion of never/daily/weekly/monthly Pop drinkers?
+ii.  if the frequency of drinking Pop causes more harm to people.
+iii. Average never/daily/weekly/monthly POP drinkers' weight.
+
+
+### For this question we will be using the variables :
+ssbsugar: How Often Do You Drink Regular Soda Or Pop? 
+
+_state: State Fips Code
+
+physhlth: Number Of Days Physical Health Not Good
+
+weight2: Reported Weight In Pounds
+
+### Load packages and data
+```{r get_the_data}
+load("brfss2013.Rdata")
+dim(brfss2013)
+```
+
+```{r load_libraries, message=FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r eval=FALSE}
+PopDrinker <- select(brfss2013, X_state, ssbsugar, physhlth, weight2) %>% 
+  filter(!is.na(X_state), !is.na(ssbsugar), !is.na(physhlth), !is.na(weight2), X_state !="Michigan")
+
+```
+
+### Question 1
+
+```{r eval=FALSE}
+StateDrinker <- select(PopDrinker, X_state, ssbsugar) %>%
+  group_by(X_state) %>%
+  summarise(n = n())
+
+StateNeverDrinker <- select(PopDrinker, X_state, ssbsugar) %>%
+  filter(ssbsugar==0) %>%
+  group_by(X_state) %>%
+  summarise(n = n())
+
+StateDailyDrinker <- select(PopDrinker, X_state, ssbsugar) %>%
+  filter(ssbsugar>100, ssbsugar<200) %>%
+  group_by(X_state) %>%
+  summarise(n = n())
+
+StateWeeklyDrinker <- select(PopDrinker, X_state, ssbsugar) %>%
+  filter(ssbsugar>=200, ssbsugar<300) %>%
+  group_by(X_state) %>%
+  summarise(n = n())
+
+StateMonthlyDrinker <- select(PopDrinker, X_state, ssbsugar) %>%
+  filter(ssbsugar>=300, ssbsugar<400) %>%
+  group_by(X_state) %>%
+  summarise(n = n())
+
+```
+plot the proportion of daily Pop drinkers in each state
+```{r eval=FALSE}
+ggplot(StateDailyDrinker, aes(x = X_state, y = StateDailyDrinker$n / StateDrinker$n)) +
+    geom_bar(stat = "identity", width = 0.5) + 
+    labs(x = "states", y = "proportion", title = "proportion of daily Pop drinkers")+
+    theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
+
+```
+plot the proportion of never/daily/weekly/monthly Pop drinkers in each state
+```{r eval=FALSE}
+states <- rep(StateDrinker$X_state, each = 4)
+frequency <- rep(c("never", "daily", "weekly", "monthly"), times = 15)
+propor <- c(1:60)
+for (i in 0:14){  
+  propor[4*i +1] <- StateNeverDrinker$n[i+1]/StateDrinker$n[i+1]
+  propor[4*i +2] <- StateDailyDrinker$n[i+1]/StateDrinker$n[i+1]
+  propor[4*i +3] <- StateWeeklyDrinker$n[i+1]/StateDrinker$n[i+1]
+  propor[4*i +4] <- StateMonthlyDrinker$n[i+1]/StateDrinker$n[i+1]
+}  
+ggplot(data = data.frame(states, frequency, propor), mapping = aes(x = factor(states), y = propor, fill = frequency)) + 
+    geom_bar(stat = 'identity', position = 'dodge') + 
+    labs(x = "states", y = "proportion", title = "proportion of Pop drinkers")+
+    theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
+```
+
+
+
